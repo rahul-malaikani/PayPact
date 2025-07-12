@@ -3,7 +3,10 @@ from django.contrib.auth.models import AbstractUser
 
 class User(AbstractUser):
     # You can extend this later with profile_pic, phone, etc.
-    pass
+
+    def __str__(self):
+        return self.username or self.email or f"User {self.id}"
+
 
 class Group(models.Model):
     name = models.CharField(max_length=100)

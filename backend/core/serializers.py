@@ -17,9 +17,12 @@ class GroupMemberSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class ExpenseSerializer(serializers.ModelSerializer):
+    paid_by_username = serializers.CharField(source='paid_by.username', read_only=True)
+
     class Meta:
         model = Expense
-        fields = '__all__'
+        fields = ['id', 'group', 'amount', 'description', 'paid_by', 'paid_by_username', 'created_at']
+
 
 class SplitSerializer(serializers.ModelSerializer):
     class Meta:

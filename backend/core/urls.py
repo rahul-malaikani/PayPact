@@ -1,10 +1,12 @@
 from django.urls import path
-from . import views
+from .views import *
 
 urlpatterns = [
-    path('register/', views.register_user),
-    path('create-group/', views.create_group),
-    path('add-expense/', views.add_expense),
-    path('groups/<int:user_id>/', views.get_user_groups),
-    path('add-member/', views.add_member_to_group),
+    path('register/', RegisterUserView.as_view(), name='register'),
+    path('login/', LoginUserView.as_view(), name='login'),
+    path('create-group/', CreateGroupView.as_view(), name='create-group'),
+    path('groups/<int:user_id>/', UserGroupsView.as_view(), name='user-groups'),
+    path('add-member/', AddMemberToGroupView.as_view(), name='add-member'),
+    path('add-expense/', AddExpenseView.as_view(), name='add-expense'),
+    path('expenses/<int:group_id>/', GroupExpensesView.as_view(), name='group-expenses'),
 ]
