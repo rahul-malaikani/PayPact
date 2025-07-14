@@ -11,6 +11,10 @@ function LoginPage() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  const handleRegister = (e) => {
+    navigate("/register");
+  };
+
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
@@ -49,6 +53,7 @@ function LoginPage() {
         />
         <br /><br />
         <button type="submit">Login</button>
+        <button type="submit" onClick={handleRegister}>Register</button>
       </form>
       {error && <p style={{ color: "red" }}>{error}</p>}
     </div>

@@ -71,6 +71,7 @@ function GroupPage() {
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
           required
+          min="0.01"
         />
         <br /><br />
         <input

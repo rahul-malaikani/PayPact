@@ -73,6 +73,15 @@ class GroupExpensesView(APIView):
         expenses = Expense.objects.filter(group_id=group_id).order_by('-created_at')
         return Response(ExpenseSerializer(expenses, many=True).data)
 
+#GET ALL USERS
+class GetUserByUsernameView(APIView):
+    def get(self, request, username):
+        try:
+            user = User.objects.get(username=username)
+            return Response(UserSerializer(user).data)
+        except User.DoesNotExist:
+            return Response({"error": "User not found"}, status=404)
+
 
 
 # from django.shortcuts import render

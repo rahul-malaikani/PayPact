@@ -9,4 +9,5 @@ urlpatterns = [
     path('add-member/', AddMemberToGroupView.as_view(), name='add-member'),
     path('add-expense/', AddExpenseView.as_view(), name='add-expense'),
     path('expenses/<int:group_id>/', GroupExpensesView.as_view(), name='group-expenses'),
+    path('users/<str:username>/', GetUserByUsernameView.as_view(), name='get-user-by-username'),
 ]
