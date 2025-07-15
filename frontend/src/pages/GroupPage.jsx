@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import axios from "axios";
 
 function GroupPage() {
@@ -8,11 +8,14 @@ function GroupPage() {
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
   const [message, setMessage] = useState("");
+  const [groupName, setGroupName] = useState("");
+
 
   const user = JSON.parse(localStorage.getItem("user"));
 
   useEffect(() => {
     fetchExpenses();
+    fetchGroupName();
   }, []);
 
   const fetchExpenses = async () => {
@@ -23,6 +26,16 @@ function GroupPage() {
       console.error(err);
     }
   };
+
+  const fetchGroupName = async () => {
+  try {
+    const res = await axios.get(`http://localhost:8000/api/group/${id}/`);
+    setGroupName(res.data.name);
+  } catch (err) {
+    console.error("Error fetching group name", err);
+    setGroupName("Unknown Group");
+  }
+};
 
   const handleAddExpense = async (e) => {
     e.preventDefault();
@@ -47,44 +60,29 @@ function GroupPage() {
 
   return (
     <div style={{ padding: "2rem" }}>
-      <h2>Group ID: {id}</h2>
+      <h2>Group: {groupName}</h2>
 
       <h3>Expenses:</h3>
-      {expenses.length>0 ? (
-      <ul>
-        {expenses.map((expense) => (
-          <li key={expense.id}>
-            ₹{expense.amount} – {expense.description} (Paid by {expense.paid_by_username})
-          </li>
-        ))}
-      </ul>
-        ):(<p>No expenses!</p>)}
-      
-      
-      <hr />
+      {expenses.length > 0 ? (
+        <ul>
+          {expenses.map((expense) => (
+            <li key={expense.id}>
+              ₹{expense.amount} – {expense.description} (Paid by {expense.paid_by_username})
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p>No expenses!</p>
+      )}
 
-      <h3>Add Expense</h3>
-      <form onSubmit={handleAddExpense}>
-        <input
-          type="number"
-          placeholder="Amount"
-          value={amount}
-          onChange={(e) => setAmount(e.target.value)}
-          required
-          min="0.01"
-        />
-        <br /><br />
-        <input
-          type="text"
-          placeholder="Description"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          required
-        />
-        <br /><br />
-        <button type="submit">Add Expense</button>
-      </form>
-      <p>{message}</p>
+      <br />
+      <Link to={`/group/${id}/add-expense`}>
+        <button>+ Add Expense</button>
+      </Link>{" "}
+      &nbsp;
+      <Link to={`/group/${id}/summary`}>
+        <button>Settle up</button>
+      </Link>
     </div>
   );
 }

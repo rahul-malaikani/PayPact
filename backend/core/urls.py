@@ -10,4 +10,7 @@ urlpatterns = [
     path('add-expense/', AddExpenseView.as_view(), name='add-expense'),
     path('expenses/<int:group_id>/', GroupExpensesView.as_view(), name='group-expenses'),
     path('users/<str:username>/', GetUserByUsernameView.as_view(), name='get-user-by-username'),
+    path("group/<int:pk>/", GroupDetailView.as_view()),
+    path('groups/<int:group_id>/members/', GroupMembersView.as_view(), name='group-members'),
+
 ]

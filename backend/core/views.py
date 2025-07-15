@@ -4,7 +4,7 @@ from rest_framework import status
 from django.contrib.auth import authenticate
 from .models import User, Group, GroupMember, Expense
 from .serializers import *
-from rest_framework.generics import CreateAPIView, ListAPIView
+from rest_framework.generics import CreateAPIView, ListAPIView, RetrieveAPIView
 
 # REGISTER
 class RegisterUserView(APIView):
@@ -44,7 +44,7 @@ class CreateGroupView(CreateAPIView):
 # GET USER GROUPS
 class UserGroupsView(APIView):
     def get(self, request, user_id):
-        groups = Group.objects.filter(groupmember__user__id=user_id)
+        groups = Group.objects.filter(groupmember__user__id=user_id).order_by('-created_at')
         return Response(GroupSerializer(groups, many=True).data)
 
 # ADD MEMBER TO GROUP
@@ -81,6 +81,29 @@ class GetUserByUsernameView(APIView):
             return Response(UserSerializer(user).data)
         except User.DoesNotExist:
             return Response({"error": "User not found"}, status=404)
+
+#GROUP DETAILS FROM ID
+class GroupDetailView(APIView):
+    def get(self, request, pk):
+        try:
+            group = Group.objects.get(pk=pk)
+            serializer = GroupSerializer(group)
+            return Response(serializer.data)
+        except Group.DoesNotExist:
+            return Response({"error": "Group not found"}, status=status.HTTP_404_NOT_FOUND)
+
+class GroupMembersView(APIView):
+    def get(self, request, group_id):
+        members = GroupMember.objects.filter(group_id=group_id).select_related('user')
+        data = [
+            {
+                "id": m.user.id,
+                "username": m.user.username
+            }
+            for m in members
+        ]
+        return Response(data)
+
 
 
 

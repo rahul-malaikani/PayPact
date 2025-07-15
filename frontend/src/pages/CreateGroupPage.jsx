@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 
 function CreateGroup() {
   const [groupName, setGroupName] = useState("");
-  const [usernames, setUsernames] = useState([""]); // array of usernames
+  const [usernames, setUsernames] = useState([""]);
   const [message, setMessage] = useState("");
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem("user"));
@@ -19,40 +19,58 @@ function CreateGroup() {
     setUsernames([...usernames, ""]);
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      // 1. Create the group
-      const res = await axios.post("http://localhost:8000/api/create-group/", {
-        name: groupName,
-        created_by: user.id,
-      });
-      const groupId = res.data.id;
+  const removeUsernameField = (index) => {
+    const newUsernames = usernames.filter((_, i) => i !== index);
+    setUsernames(newUsernames);
+  };
 
-      // 2. Add current user to group
+  const handleSubmit = async (e) => {
+  e.preventDefault();
+  try {
+    // Step 1: Validate all usernames before creating the group
+    const userIds = [];
+
+    for (const username of usernames) {
+      try {
+        const userRes = await axios.get(`http://localhost:8000/api/users/${username}/`);
+        userIds.push(userRes.data.id);
+      } catch {
+        setMessage(`User '${username}' does not exist. Group not created.`);
+        return;
+      }
+    }
+
+    // Step 2: Create the group only if all usernames are valid
+    const res = await axios.post("http://localhost:8000/api/create-group/", {
+      name: groupName,
+      created_by: user.id,
+    });
+
+    const groupId = res.data.id;
+
+    // Step 3: Add current user to group
+    await axios.post("http://localhost:8000/api/add-member/", {
+      group: groupId,
+      user: user.id,
+    });
+
+    // Step 4: Add validated users to group
+    for (const userId of userIds) {
       await axios.post("http://localhost:8000/api/add-member/", {
         group: groupId,
-        user: user.id,
+        user: userId,
       });
-
-      // 3. Add other users by username
-      for (const username of usernames) {
-        const userRes = await axios.get(`http://localhost:8000/api/users/${username}/`);
-        const userId = userRes.data.id;
-
-        await axios.post("http://localhost:8000/api/add-member/", {
-          group: groupId,
-          user: userId,
-        });
-      }
-
-      setMessage("Group created successfully!");
-      navigate("/dashboard");
-    } catch (err) {
-      console.error(err);
-      setMessage("Error creating group");
     }
-  };
+
+    setMessage("Group created successfully!");
+    navigate("/dashboard");
+
+  } catch (err) {
+    console.error(err);
+    setMessage("Server error. Please try again.");
+  }
+};
+
 
   return (
     <div style={{ padding: "2rem" }}>
@@ -69,16 +87,26 @@ function CreateGroup() {
 
         <h4>Add Members (by username)</h4>
         {usernames.map((uname, i) => (
-          <input
-            key={i}
-            type="text"
-            placeholder={`Username ${i + 1}`}
-            value={uname}
-            onChange={(e) => handleUsernameChange(i, e.target.value)}
-            required
-          />
+          <div key={i} style={{ display: "flex", alignItems: "center", marginBottom: "10px" }}>
+            <input
+              type="text"
+              placeholder={`Username ${i + 1}`}
+              value={uname}
+              onChange={(e) => handleUsernameChange(i, e.target.value)}
+              required
+              style={{ marginRight: "10px" }}
+            />
+            <button
+              type="button"
+              
+              onClick={() => removeUsernameField(i)}
+              disabled={usernames.length === 1}
+            >
+              Remove
+            </button>
+          </div>
         ))}
-        <br /><br />
+
         <button type="button" onClick={addUsernameField}>+ Add More</button>
         <br /><br />
         <button type="submit">Create Group</button>

@@ -35,7 +35,10 @@ function Dashboard() {
         </ul>
       )}
       <br />
-      <Link to="/create-group">+ Create New Group</Link>
+      <Link to="/create-group">
+        <button>+ Create New Group</button>
+      </Link>
+      
     </div>
   );
 }
