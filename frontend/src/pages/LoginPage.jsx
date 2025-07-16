@@ -32,30 +32,51 @@ function LoginPage() {
   };
 
   return (
-    <div style={{ padding: "2rem" }}>
-      <h2>Login</h2>
-      <form onSubmit={handleLogin}>
-        <input
-          name="username"
-          placeholder="Username"
-          value={formData.username}
-          onChange={handleChange}
-          required
-        />
-        <br /><br />
-        <input
-          name="password"
-          type="password"
-          placeholder="Password"
-          value={formData.password}
-          onChange={handleChange}
-          required
-        />
-        <br /><br />
-        <button type="submit">Login</button>
-        <button type="submit" onClick={handleRegister}>Register</button>
-      </form>
-      {error && <p style={{ color: "red" }}>{error}</p>}
+    <div className="min-h-screen bg-gradient-to-br from-indigo-200 to-white flex items-center justify-center px-4">
+      <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
+        <h2 className="text-2xl font-bold text-center text-indigo-600 mb-6">Login to PayPact</h2>
+
+        
+
+        <form onSubmit={handleLogin} className="space-y-4">
+          <input
+            name="username"
+            placeholder="Username"
+            value={formData.username}
+            onChange={handleChange}
+            required
+            className="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-400"
+          />
+          <input
+            name="password"
+            type="password"
+            placeholder="Password"
+            value={formData.password}
+            onChange={handleChange}
+            required
+            className="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-400"
+          />
+
+          <div className="flex gap-2">
+            <button
+              type="submit"
+              className="w-full bg-indigo-600 text-white py-2 rounded hover:bg-indigo-700 transition"
+            >
+              Login
+            </button>
+            <button
+              type="button"
+              onClick={handleRegister}
+              className="w-full bg-gray-200 text-gray-800 py-2 rounded hover:bg-gray-300 transition"
+            >
+              Register
+            </button>
+          </div>
+          {error && (
+          <p className="text-red-500 text-sm mb-4 text-center">{error}</p>
+        )}
+        </form>
+      </div>
     </div>
   );
 }

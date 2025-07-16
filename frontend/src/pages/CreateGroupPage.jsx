@@ -1,6 +1,7 @@
 import { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import toast from 'react-hot-toast';
 
 function CreateGroup() {
   const [groupName, setGroupName] = useState("");
@@ -8,6 +9,7 @@ function CreateGroup() {
   const [message, setMessage] = useState("");
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem("user"));
+  
 
   const handleUsernameChange = (index, value) => {
     const newUsernames = [...usernames];
@@ -36,6 +38,7 @@ function CreateGroup() {
         userIds.push(userRes.data.id);
       } catch {
         setMessage(`User '${username}' does not exist. Group not created.`);
+        toast.error("User does not exist")
         return;
       }
     }
@@ -109,7 +112,7 @@ function CreateGroup() {
 
         <button type="button" onClick={addUsernameField}>+ Add More</button>
         <br /><br />
-        <button type="submit">Create Group</button>
+        <button onClick={() => toast.success("Group created!")} type="submit">Create Group</button>
       </form>
       <p>{message}</p>
     </div>

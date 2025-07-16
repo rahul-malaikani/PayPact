@@ -4,9 +4,10 @@ backend/*.pyc
 backend/db.sqlite3
 backend/venv/
 backend/.env
-
+venv/
 # === OS & editor junk ===
 .DS_Store
 *.swp
 *.log
 *.tmp
+
