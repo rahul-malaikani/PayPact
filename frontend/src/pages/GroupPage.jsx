@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import axios from "axios";
 import Navbar from "./Navbar";
-
+import { useNavigate } from "react-router-dom";
 
 function GroupPage() {
   const { id } = useParams(); // group ID from URL
@@ -11,15 +11,19 @@ function GroupPage() {
   const [groupName, setGroupName] = useState("");
   const [members, setMembers] = useState([]);
   const [analytics, setAnalytics] = useState(null);
-
+  const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem("user"));
 
   useEffect(() => {
+    if (!user) {
+      navigate("/login");
+      return;
+    }
     fetchExpenses();
     fetchGroupName();
     fetchGroupMembers();
     fetchAnalytics();
-  }, []);
+  },[navigate]);
 
   const fetchExpenses = async () => {
     try {
