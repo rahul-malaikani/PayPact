@@ -14,6 +14,12 @@ function AddExpense() {
 
   const user = JSON.parse(localStorage.getItem("user"));
 
+  useEffect(()=>{
+    if (!user) {
+      navigate("/login");
+      return;
+    }
+  },[navigate])
   const handleAddExpense = async (e) => {
     e.preventDefault();
 

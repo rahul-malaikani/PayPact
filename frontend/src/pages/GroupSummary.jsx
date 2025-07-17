@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import Navbar from "./Navbar";
 
@@ -9,11 +9,16 @@ function GroupSummary() {
   const [loading, setLoading] = useState(true);
   const [groupName, setGroupName] = useState("");
   const [memberStatuses, setMemberStatuses] = useState({}); // placeholder for paid/unpaid status
+  const navigate=useNavigate()
 
   const user = JSON.parse(localStorage.getItem("user"));
   const username = user?.username;
 
   useEffect(() => {
+    if (!user) {
+      navigate("/login");
+      return;
+    }
     async function fetchSummary() {
       try {
         // Fetch expenses and group members
