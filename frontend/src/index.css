@@ -16,3 +16,13 @@
 .spacing{
   letter-spacing: -2px;
 }
+
+@font-face {
+  font-family: 'Akira';
+  src: url('/fonts/Akira.otf') format('opentype');
+}
+
+.akira {
+  font-family: 'Akira', sans-serif;
+}
+
