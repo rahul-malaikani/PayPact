@@ -12,5 +12,5 @@ urlpatterns = [
     path('users/<str:username>/', GetUserByUsernameView.as_view(), name='get-user-by-username'),
     path("group/<int:pk>/", GroupDetailView.as_view()),
     path('groups/<int:group_id>/members/', GroupMembersView.as_view(), name='group-members'),
-
+    path('group/<int:group_id>/analytics/', GroupAnalyticsView.as_view(), name='group-analytics'),
 ]

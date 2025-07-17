@@ -5,6 +5,7 @@ from django.contrib.auth import authenticate
 from .models import User, Group, GroupMember, Expense
 from .serializers import *
 from rest_framework.generics import CreateAPIView, ListAPIView, RetrieveAPIView
+from django.db import models
 
 # REGISTER
 class RegisterUserView(APIView):
@@ -104,6 +105,25 @@ class GroupMembersView(APIView):
         ]
         return Response(data)
 
+
+class GroupAnalyticsView(APIView):
+    def get(self, request, group_id):
+        expenses = Expense.objects.filter(group__id=group_id)
+        members = GroupMember.objects.filter(group__id=group_id)
+        
+        total_amount = sum([float(e.amount) for e in expenses])
+        
+        user_totals = {}
+        for member in members:
+            username = member.user.username
+            user_exp = expenses.filter(paid_by=member.user)
+            user_total = sum([float(e.amount) for e in user_exp])
+            user_totals[username] = user_total
+        
+        return Response({
+            "total_spent": total_amount,
+            "user_contributions": user_totals
+        })
 
 
 
