@@ -25,6 +25,9 @@ class ExpenseSerializer(serializers.ModelSerializer):
 
 
 class SplitSerializer(serializers.ModelSerializer):
+    owed_by_username = serializers.CharField(source='owed_by.username', read_only=True)
+    owed_to_username = serializers.CharField(source='owed_to.username', read_only=True)
+
     class Meta:
         model = Split
-        fields = '__all__'
+        fields = ['id', 'expense', 'owed_by', 'owed_to', 'owed_by_username', 'owed_to_username', 'amount', 'status']

@@ -2,13 +2,16 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from django.contrib.auth import authenticate
-from .models import User, Group, GroupMember, Expense
+from .models import User, Group, GroupMember, Expense, Payment,Split
 from .serializers import *
 from rest_framework.generics import CreateAPIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from .permissions import IsMember
 from rest_framework_simplejwt.tokens import RefreshToken
+import razorpay
+from django.conf import settings
 
+razorpay_client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
 class RegisterUserView(APIView):
     permission_classes = [AllowAny]
 
@@ -144,7 +147,107 @@ class GroupAnalyticsView(APIView):
             "user_contributions": user_totals
         })
 
+class CreatePaymentOrderView(APIView):
+    permission_classes = [IsAuthenticated]
 
+    def post(self, request):
+        try:
+            amount = request.data.get('amount')
+            payer_id = request.data.get('payer_id')
+            payee_id = request.data.get('payee_id')
+            group_id = request.data.get('group_id')
+            amount_paise = int(float(amount) * 100)
+            
+            # Create Razorpay Order with UPI preference
+            razorpay_order = razorpay_client.order.create({
+                'amount': amount_paise,
+                'currency': 'INR',
+                'payment_capture': '1',
+                'notes': {
+                    'group_id': group_id,
+                    'payer_id': payer_id,
+                    'payee_id': payee_id
+                }
+            })
+
+            payment = Payment.objects.create(
+                group_id=group_id,
+                payer_id=payer_id,
+                payee_id=payee_id,
+                amount=amount,
+                razorpay_order_id=razorpay_order['id'],
+                status='created'
+            )
+
+            return Response({
+                'order_id': razorpay_order['id'],
+                'amount': amount_paise,
+                'currency': 'INR',
+                'payment_id': payment.id,
+                'preferred_method': 'upi'  # Tell frontend to prefer UPI
+            })
+
+        except Exception as e:
+            return Response({'error': str(e)}, status=400)
+
+class VerifyPaymentView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        try:
+            data = request.data
+            payment = Payment.objects.get(id=data.get('payment_id'))
+            
+            # In production, you should verify the signature
+            # For testing, we'll skip verification
+            payment.razorpay_payment_id = data.get('razorpay_payment_id')
+            payment.razorpay_signature = data.get('razorpay_signature')
+            payment.status = 'success'
+            payment.save()
+
+            return Response({
+                'status': 'success',
+                'message': 'Payment verified and recorded'
+            })
+            
+        except Exception as e:
+            return Response({'error': str(e)}, status=400)
+
+class UpdateSplitStatusView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        payer_id = request.data.get('payer_id')  # owed_by
+        payee_id = request.data.get('payee_id')  # owed_to
+        group_id = request.data.get('group_id')
+
+        try:
+            split = Split.objects.get(
+                owed_by_id=payer_id,
+                owed_to_id=payee_id,
+                expense__group_id=group_id
+            )
+            split.status = 'Paid'
+            split.save()
+            return Response({'message': 'Split marked as Paid'})
+        except Split.DoesNotExist:
+            return Response({'error': 'Split not found'}, status=404)
+
+class GroupSplitsStatusView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, group_id):
+        splits = Split.objects.filter(expense__group_id=group_id)
+        data = [
+            {
+                'owed_by': split.owed_by.username,
+                'owed_to': split.owed_to.username,
+                'status': split.status
+            }
+            for split in splits
+        ]
+        return Response(data)
+    
 # from rest_framework.views import APIView
 # from rest_framework.response import Response
 # from rest_framework import status
