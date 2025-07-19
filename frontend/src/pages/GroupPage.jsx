@@ -1,66 +1,88 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
-import axios from "axios";
+import { Link, useParams, useNavigate } from "react-router-dom";
 import Navbar from "./Navbar";
-import { useNavigate } from "react-router-dom";
+import api from "../api/axios";
+import { toast } from "react-hot-toast"; // assuming you use react-toastify for toasts
 
 function GroupPage() {
-  const { id } = useParams(); // group ID from URL
+  const { id } = useParams();
   const [expenses, setExpenses] = useState([]);
-  const [message, setMessage] = useState("");
-  const [groupName, setGroupName] = useState("");
+  const [groupName, setGroupName] = useState("Loading...");
   const [members, setMembers] = useState([]);
   const [analytics, setAnalytics] = useState(null);
   const navigate = useNavigate();
-  const user = JSON.parse(localStorage.getItem("user"));
 
   useEffect(() => {
+    const user = JSON.parse(localStorage.getItem("user"));
     if (!user) {
       navigate("/login");
       return;
     }
-    fetchExpenses();
-    fetchGroupName();
-    fetchGroupMembers();
-    fetchAnalytics();
-  },[navigate]);
+    fetchGroupNameAndData();
+  }, []);
+
+  const fetchGroupNameAndData = async () => {
+    try {
+      const res = await api.get(`group/${id}/`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('access_token')}`
+        }
+      });
+      setGroupName(res.data.name);
+
+      // Proceed to fetch other data after group name verification
+      fetchExpenses();
+      fetchGroupMembers();
+      fetchAnalytics();
+
+    } catch (err) {
+      console.error("Error fetching group name", err);
+      setGroupName("Not authorized");
+      toast.error("You are not authorized to view this group. Redirecting!");
+      setTimeout(() => {
+        navigate("/dashboard");
+      }); // Optional delay to let user see the message
+    }
+  };
 
   const fetchExpenses = async () => {
     try {
-      const res = await axios.get(`http://localhost:8000/api/expenses/${id}/`);
+      const res = await api.get(`expenses/${id}/`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('access_token')}`
+        }
+      });
       setExpenses(res.data);
     } catch (err) {
       console.error(err);
     }
   };
 
-  const fetchGroupName = async () => {
+  const fetchGroupMembers = async () => {
     try {
-      const res = await axios.get(`http://localhost:8000/api/group/${id}/`);
-      setGroupName(res.data.name);
+      const res = await api.get(`groups/${id}/members/`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('access_token')}`
+        }
+      });
+      setMembers(res.data);
     } catch (err) {
-      console.error("Error fetching group name", err);
-      setGroupName("Unknown Group");
+      console.error("Error fetching group members", err);
     }
   };
 
-  const fetchGroupMembers = async () => {
-  try {
-    const res = await axios.get(`http://localhost:8000/api/groups/${id}/members/`);
-    setMembers(res.data);
-  } catch (err) {
-    console.error("Error fetching group members", err);
-  }
-};
-
-const fetchAnalytics = async () => {
-  try {
-    const res = await axios.get(`http://localhost:8000/api/group/${id}/analytics/`);
-    setAnalytics(res.data);
-  } catch (err) {
-    console.error("Error fetching analytics", err);
-  }
-};
+  const fetchAnalytics = async () => {
+    try {
+      const res = await api.get(`group/${id}/analytics/`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('access_token')}`
+        }
+      });
+      setAnalytics(res.data);
+    } catch (err) {
+      console.error("Error fetching analytics", err);
+    }
+  };
 
   return (
     <>
@@ -101,41 +123,34 @@ const fetchAnalytics = async () => {
             </div>
           )}
 
-
-
           {expenses.length === 0 ? (
             <div className="text-center text-gray-500 mt-6">
               <p className="text-lg">No expenses yet in this group.</p>
               <p className="text-sm mt-1">Start by adding your first shared expense 💸</p>
             </div>
-
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-  {expenses.map((expense) => (
-    <div
-      key={expense.id}
-      className="relative bg-white rounded-xl shadow-md hover:shadow-xl hover:bg-blue-50 transition duration-300 p-6 flex items-start space-x-4"
-    >
-      {/* Icon Circle */}
-      <div className="bg-blue-100 text-blue-600 font-bold rounded-full w-12 h-12 flex items-center justify-center text-xl shadow-sm">
-        ₹
-      </div>
-
-      {/* Expense Details */}
-      <div className="flex flex-col">
-        <h3 className="text-md text-gray-700 font-semibold">{expense.description}</h3>
-        <p className="text-lg text-gray-900 font-bold mt-1">₹{expense.amount}</p>
-        <p className="text-sm text-gray-500 mt-1">
-          Paid by <span className="font-medium">{expense.paid_by_username}</span>
-        </p>
-        <p className="text-xs text-gray-300 mt-2">
-          {new Date(expense.created_at).toLocaleString()}
-        </p>
-      </div>
-    </div>
-  ))}
-</div>
-
+              {expenses.map((expense) => (
+                <div
+                  key={expense.id}
+                  className="relative bg-white rounded-xl shadow-md hover:shadow-xl hover:bg-blue-50 transition duration-300 p-6 flex items-start space-x-4"
+                >
+                  <div className="bg-blue-100 text-blue-600 font-bold rounded-full w-12 h-12 flex items-center justify-center text-xl shadow-sm">
+                    ₹
+                  </div>
+                  <div className="flex flex-col">
+                    <h3 className="text-md text-gray-700 font-semibold">{expense.description}</h3>
+                    <p className="text-lg text-gray-900 font-bold mt-1">₹{expense.amount}</p>
+                    <p className="text-sm text-gray-500 mt-1">
+                      Paid by <span className="font-medium">{expense.paid_by_username}</span>
+                    </p>
+                    <p className="text-xs text-gray-300 mt-2">
+                      {new Date(expense.created_at).toLocaleString()}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
           )}
 
           <div className="mt-12 flex justify-center gap-4 flex-wrap">
@@ -150,10 +165,6 @@ const fetchAnalytics = async () => {
               </button>
             </Link>
           </div>
-
-          {message && (
-            <p className="mt-6 text-center text-sm text-green-600 font-medium">{message}</p>
-          )}
         </div>
       </div>
     </>

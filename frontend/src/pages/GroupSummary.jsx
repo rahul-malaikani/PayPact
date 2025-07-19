@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import axios from "axios";
 import Navbar from "./Navbar";
+import api from "../api/axios";
+import toast from "react-hot-toast";
 
 function GroupSummary() {
   const { id } = useParams(); // group id
@@ -21,14 +22,26 @@ function GroupSummary() {
     }
     async function fetchSummary() {
       try {
-        // Fetch expenses and group members
-        const [expRes, membersRes, groupRes] = await Promise.all([
-          axios.get(`http://localhost:8000/api/expenses/${id}/`),
-          axios.get(`http://localhost:8000/api/groups/${id}/members/`),
-          axios.get(`http://localhost:8000/api/group/${id}/`)
-        ]);
+  // Check if user has access to this group
+        const groupRes = await api.get(`group/${id}/`, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('access_token')}`
+          }
+        });
 
         setGroupName(groupRes.data.name);
+          const [expRes, membersRes] = await Promise.all([
+            api.get(`expenses/${id}/`, {
+              headers: {
+                Authorization: `Bearer ${localStorage.getItem('access_token')}`
+              }
+            }),
+            api.get(`groups/${id}/members/`, {
+              headers: {
+                Authorization: `Bearer ${localStorage.getItem('access_token')}`
+              }
+            })
+          ]);
 
         const expenses = expRes.data;
         const memberUsernames = membersRes.data.map(m => m.username);
@@ -98,12 +111,15 @@ function GroupSummary() {
         setSummary(owes);
         setLoading(false);
       } catch (err) {
+        setLoading(false)
+        toast.error("You are not authorized to view this group. Redirecting!");
+        navigate("/dashboard");
         console.error(err);
       }
     }
 
     fetchSummary();
-  }, [id]);
+  }, []);
 
   return (
     <>
