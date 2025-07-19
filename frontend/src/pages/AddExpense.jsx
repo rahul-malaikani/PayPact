@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import axios from "axios";
+import api from "../api/axios";
 import toast from "react-hot-toast";
 import Navbar from "./Navbar";
 
@@ -14,17 +14,46 @@ function AddExpense() {
 
   const user = JSON.parse(localStorage.getItem("user"));
 
-  useEffect(()=>{
+  useEffect(() => {
     if (!user) {
       navigate("/login");
       return;
     }
-  },[navigate])
+
+    async function verifyGroupAccess() {
+      try {
+        const res = await api.get(`group/${id}/`, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('access_token')}`
+          }
+        });
+
+        if (res.data) {
+          setGroupName(res.data.name);
+        } else {
+          toast.error("You are not authorized for this group");
+          navigate("/dashboard");
+        }
+      } catch (err) {
+        console.error("Access denied or group not found:", err);
+        toast.error("You are not authorized! Redirecting");
+        navigate("/dashboard");
+      }
+    }
+
+    verifyGroupAccess();
+  }, [user, id, navigate]);
+
   const handleAddExpense = async (e) => {
     e.preventDefault();
 
+    if (!amount || !description) {
+      toast.error("Amount and Description are required");
+      return;
+    }
+
     try {
-      await axios.post("http://localhost:8000/api/add-expense/", {
+      await api.post("add-expense/", {
         group: id,
         amount,
         description,
@@ -35,19 +64,12 @@ function AddExpense() {
       setAmount("");
       setDescription("");
 
-      setTimeout(() => navigate(`/group/${id}`), 10); // redirect back to group page
+      setTimeout(() => navigate(`/group/${id}`), 500);
     } catch (err) {
       console.error(err);
       toast.error("Failed to add expense");
     }
   };
-
-  useEffect(() => {
-    axios
-      .get(`http://localhost:8000/api/group/${id}/`)
-      .then((res) => setGroupName(res.data.name))
-      .catch((err) => console.error("Error fetching group name:", err));
-  }, []);
 
   return (
     <>

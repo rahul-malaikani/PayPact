@@ -1,14 +1,19 @@
 import { useNavigate, Link } from "react-router-dom";
 import { useState, useRef, useEffect,} from "react";
+import api from "../api/axios";
 
 function Navbar() {
   const navigate = useNavigate();
-  const user = JSON.parse(localStorage.getItem("user"));
+  const user = JSON.parse(localStorage.getItem("user") || "null");
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef(null);
-
+  if (!user) {
+    return null; // or a minimal nav
+  }
   const handleLogout = () => {
-    localStorage.removeItem("user");
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
+    localStorage.removeItem('user');
     navigate("/login");
   };
 

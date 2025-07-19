@@ -1,5 +1,5 @@
 import { useState } from "react";
-import axios from "axios";
+import api from "../api/axios";
 import { useNavigate } from "react-router-dom";
 import toast from 'react-hot-toast';
 
@@ -19,11 +19,17 @@ function LoginPage() {
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.post("http://localhost:8000/api/login/", formData);
-      const user = res.data;
+      const response = await api.post("login/", formData);
+      const user = {
+        username: response.data.username,
+        email: response.data.email,
+        id: response.data.id,  // if returned
+      };
 
-      // Save user to localStorage
       localStorage.setItem("user", JSON.stringify(user));
+      localStorage.setItem('access_token', response.data.access);
+      localStorage.setItem('refresh_token', response.data.refresh);
+      console.log("Access token:", response.data.access);
       toast.success(`Welcome ${user.username}!`)
       navigate("/dashboard");
     } catch (err) {

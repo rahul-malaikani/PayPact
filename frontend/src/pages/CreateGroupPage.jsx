@@ -3,6 +3,7 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import Navbar from "./Navbar";
+import api from "../api/axios";
 
 function CreateGroup() {
   const [groupName, setGroupName] = useState("");
@@ -11,7 +12,6 @@ function CreateGroup() {
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem("user"));
   useEffect(() => {
-    const user = JSON.parse(localStorage.getItem("user"));
     if (!user) {
       navigate("/login");
       return;
@@ -45,9 +45,10 @@ function CreateGroup() {
       // Step 1: Validate all usernames before creating the group
       for (const username of usernames) {
         try {
-          const userRes = await axios.get(`http://localhost:8000/api/users/${username}/`);
+          const userRes = await api.get(`users/${username}/`);
           userIds.push(userRes.data.id);
-        } catch {
+        } catch (error){
+          console.log(error)
           setMessage(`User '${username}' does not exist. Group not created.`);
           toast.error("User does not exist");
           return;
@@ -55,7 +56,7 @@ function CreateGroup() {
       }
 
       // Step 2: Create the group only if all usernames are valid
-      const res = await axios.post("http://localhost:8000/api/create-group/", {
+      const res = await api.post("create-group/", {
         name: groupName,
         created_by: user.id,
       });
@@ -63,14 +64,14 @@ function CreateGroup() {
       const groupId = res.data.id;
 
       // Step 3: Add current user to group
-      await axios.post("http://localhost:8000/api/add-member/", {
+      await api.post("add-member/", {
         group: groupId,
         user: user.id,
       });
 
       // Step 4: Add validated users to group
       for (const userId of userIds) {
-        await axios.post("http://localhost:8000/api/add-member/", {
+        await api.post("add-member/", {
           group: groupId,
           user: userId,
         });

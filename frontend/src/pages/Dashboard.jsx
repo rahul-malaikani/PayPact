@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
 import Navbar from "./Navbar";
+import api from "../api/axios";
 
 function Dashboard() {
   const [groups, setGroups] = useState([]);
@@ -14,11 +15,16 @@ function Dashboard() {
       return;
     }
 
-    axios
-      .get(`http://localhost:8000/api/groups/${user.id}/`)
+    api
+      .get(`groups/${user.id}/`, {
+  headers: {
+    Authorization: `Bearer ${localStorage.getItem('access_token')}`
+  }
+})
       .then((res) => setGroups(res.data))
       .catch((err) => console.error(err));
   }, []);
+
 
   return (
     <>
@@ -48,7 +54,7 @@ function Dashboard() {
                   className="bg-white border border-gray-200 rounded-xl shadow-md hover:shadow-xl hover:bg-blue-50 transition duration-300 p-6 flex items-center space-x-4"
                 >
                   <div className="bg-blue-100 text-blue-600 font-bold rounded-full w-12 h-12 flex items-center justify-center text-xl">
-                    {group.name.charAt(0).toUpperCase()}
+                    {group.name?.charAt(0).toUpperCase()}
                   </div>
                   <div>
                     <h3 className="text-lg font-semibold text-gray-800">{group.name}</h3>

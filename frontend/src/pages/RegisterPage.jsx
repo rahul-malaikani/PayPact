@@ -2,6 +2,7 @@ import { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import toast from 'react-hot-toast';
+import api from "../api/axios.js";
 
 function RegisterPage() {
   const [formData, setFormData] = useState({ username: "", password: "" });
@@ -15,7 +16,7 @@ function RegisterPage() {
   const handleRegister = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.post("http://localhost:8000/api/register/", formData);
+      const res = await api.post("register/", formData);
       console.log("Registered:", res.data);
       toast.success("Registered successfully!");
       setMessage("Registered! Redirecting to login...");
