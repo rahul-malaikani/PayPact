@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'core',
     'corsheaders',
+    'django_extensions',
 ]
 
 MIDDLEWARE = [
@@ -139,3 +140,8 @@ REST_FRAMEWORK={
         'rest_framework.permissions.IsAuthenticated',
     ],
 }
+
+RAZORPAY_KEY_ID="rzp_test_G820zxtlCQRG7A"
+RAZORPAY_KEY_SECRET="W1fY0MmdD7ueo4koWER26ULE"
+
+DEBUG=True
