@@ -16,5 +16,5 @@ urlpatterns = [
     path('createpaymentorder/', CreatePaymentOrderView.as_view(), name='create-payment-order'),
     path('verifypayment/', VerifyPaymentView.as_view(), name='verify-payment'),
     path('updatesplitstatus/', UpdateSplitStatusView.as_view(), name='update-split-status'),
-    path('groups/<int:group_id>/splits-status/', GroupSplitsStatusView.as_view(), name='group-splits-status'),
+    path('groups/<int:group_id>/splits/', GroupSplitsStatusView.as_view(), name='group-splits'),
 ]
