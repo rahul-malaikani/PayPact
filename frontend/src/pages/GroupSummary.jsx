@@ -13,7 +13,7 @@ function GroupSummary() {
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem("user"));
   const username = user?.username;
-
+  const [paymentLoading, setPaymentLoading] = useState(false);
   const fetchSummary = async () => {
     try {
       const groupRes = await api.get(`group/${id}/`);
@@ -70,7 +70,14 @@ function GroupSummary() {
         if (balances[debtor] === 0) i++;
         if (balances[creditor] === 0) j++;
       }
-
+      const splitsRes = await api.get(`/groups/${id}/splits/`);
+      const paidSet = new Set();
+      splitsRes.data.forEach(split => {
+        if (split.status === 'Paid') {
+          paidSet.add(`${split.owed_by_id}_${split.owed_to_id}`);
+        }
+      });
+      setPaidSplits(paidSet);
       setSummary(owes);
       setLoading(false);
     } catch (err) {
@@ -89,6 +96,8 @@ function GroupSummary() {
   }, []);
 
   const handlePay = async (item) => {
+    if (paymentLoading) return; // prevent double clicks
+      setPaymentLoading(true);
     try {
       const res = await api.post('/createpaymentorder/', {
         payer_id: item.from_id,
@@ -119,6 +128,12 @@ function GroupSummary() {
               razorpay_signature: response.razorpay_signature,
               payment_id
             });
+              
+            await api.post('/updatesplitstatus/',{
+              "payer_id":item.from_id,
+              "payee_id":item.to_id,
+              "group_id":id
+            })
             toast.success("Payment successful!");
 
             // mark this split as paid locally
@@ -143,6 +158,8 @@ function GroupSummary() {
     } catch (err) {
       console.error("Payment error:", err);
       toast.error("Payment failed: " + (err.response?.data?.error || err.message));
+    }finally{
+          setPaymentLoading(false);
     }
   };
 
@@ -181,18 +198,26 @@ function GroupSummary() {
                     </div>
                     <div className="flex items-center gap-3">
                       {isPaid ? (
-                        <span className="px-2 py-1 text-xs bg-green-100 text-green-700 rounded">Paid</span>
+                        <span className="px-2 py-1 font-semibold text-xs bg-green-100 text-green-700 rounded">Paid</span>
                       ) : (
-                        isCurrentUser && (
+                        <>
+                        {isCurrentUser && (
                           <button
                             onClick={() => handlePay(item)}
-                            className="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 text-sm"
+                            className="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 text-sm hover:scale-[1.02] transition-all duration-300 cursor-pointer"
                           >
                             Pay Now
                           </button>
-                        )
+                        )}                     
+                      {(isCurrentUser || item.to===username) &&(
+                         <span className="px-2 py-1 font-semibold text-xs bg-red-100 text-red-600 rounded">
+                          Unpaid
+                          </span>
+                      )}
+                      </>
                       )}
                     </div>
+                   
                   </li>
                 );
               })}

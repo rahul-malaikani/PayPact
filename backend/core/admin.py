@@ -27,6 +27,6 @@ class ExpenseAdmin(admin.ModelAdmin):
 
 @admin.register(Split)
 class SplitAdmin(admin.ModelAdmin):
-    list_display = ('expense', 'owed_by', 'owed_to', 'amount')
-    search_fields = ('expense__description', 'owed_by__username', 'owed_to__username')
-    list_filter = ('expense',)
+    list_display = ('group', 'owed_by', 'owed_to', 'amount')
+    search_fields = ('group__description', 'owed_by__username', 'owed_to__username')
+    list_filter = ('group',)

@@ -179,6 +179,13 @@ class CreatePaymentOrderView(APIView):
                 status='created'
             )
 
+            split, created = Split.objects.get_or_create(
+                owed_by_id=payer_id,
+                owed_to_id=payee_id,
+                group_id=group_id,
+                defaults={'amount': amount, 'status': 'Unpaid'}
+            )
+            
             return Response({
                 'order_id': razorpay_order['id'],
                 'amount': amount_paise,
@@ -217,19 +224,22 @@ class UpdateSplitStatusView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        payer_id = request.data.get('payer_id')  # owed_by
-        payee_id = request.data.get('payee_id')  # owed_to
+        payer_id = request.data.get('payer_id')
+        payee_id = request.data.get('payee_id')
         group_id = request.data.get('group_id')
 
         try:
             split = Split.objects.get(
                 owed_by_id=payer_id,
                 owed_to_id=payee_id,
-                expense__group_id=group_id
+                group_id=group_id
             )
-            split.status = 'Paid'
-            split.save()
-            return Response({'message': 'Split marked as Paid'})
+            if split.status != 'Paid':
+                split.status = 'Paid'
+                split.save()
+                return Response({'message': 'Split marked as Paid'})
+            else:
+                return Response({'message': 'Split was already marked as Paid'})
         except Split.DoesNotExist:
             return Response({'error': 'Split not found'}, status=404)
 
@@ -237,17 +247,19 @@ class GroupSplitsStatusView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, group_id):
-        splits = Split.objects.filter(expense__group_id=group_id)
-        data = [
-            {
-                'owed_by': split.owed_by.username,
-                'owed_to': split.owed_to.username,
-                'status': split.status
-            }
-            for split in splits
-        ]
+        splits = Split.objects.filter(group__id=group_id)
+        data = [{
+            'owed_by': s.owed_by.username,
+            'owed_by_id': s.owed_by.id,
+            'owed_to': s.owed_to.username,
+            'owed_to_id': s.owed_to.id,
+            'amount': float(s.amount),
+            'status': s.status
+        } for s in splits]
+
         return Response(data)
-    
+
+#class GroupSplitStatusSet
 # from rest_framework.views import APIView
 # from rest_framework.response import Response
 # from rest_framework import status
